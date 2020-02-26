@@ -13,19 +13,19 @@ const connection = mysql.createConnection({
 connection.connect(function(err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId);
-  viewMenuTable();
+  // viewMenuTable();
   viewUpdateCharts();
 });
 
 //Main table shown when code is running
-function viewMenuTable() {
-  connection.query(
-      "SELECT * FROM employee", function(err, res){
-      if (err) throw err;
-      console.table(res);
-    }
-  );
-}
+// function viewMenuTable() {
+//   connection.query(
+//       "SELECT * FROM employee", function(err, res){
+//       if (err) throw err;
+//       console.table(res);
+//     }
+//   );
+// }
 
 //Main options to view, add, or update (Haven't worked on update yet)
 function viewUpdateCharts() {
@@ -102,12 +102,13 @@ function addDep() {
     }
   ]).then(function(answer){
       connection.query(
-      "INSERT INTO department (name) VALUES ('?')", answer.name, function(err, res){
+      "INSERT INTO department (name) VALUES (?)", answer.name, function(err, res){
         if (err) throw err;
         console.table(res);
+        addDER();
       }
       );
-      addDER();
+      
   });
 }
 
@@ -136,13 +137,12 @@ function addEmploy() {
       message: "Enter ID number for manager (IF NO MANAGER ID, PLEASE ENTER 0)"
     }
   ]).then(function(answer){
-    var query = "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('?', '?', ?, ?)";
-    connection.query(query, [answer.first_name, answer.last_name, answer.role_id, answer.manager_id], function(err, res){
+    connection.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [answer.first_name, answer.last_name, answer.role_id, answer.manager_id], function(err, res){
         if (err) throw err;
-        console.table(res);
+        console.log("Successfully added employee(Check in 'View employees')");
+        addDER();
       }
       );
-      addDER();
   });
 }
 
@@ -166,13 +166,13 @@ function addRol() {
       message: "Enter ID number of their department"
     }
   ]).then(function(answer){
-    var query = "INSERT INTO role (title, salary, department_id) VALUES ('?', '?', ?, )";
+    var query = "INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)";
     connection.query(query, [answer.title, answer.salary, answer.department_id], function(err, res){
         if (err) throw err;
         console.table(res);
+        addDER();
       }
       );
-      addDER();
   });
 }
 
@@ -222,9 +222,9 @@ inquirer
       "SELECT distinct department_id, name FROM department INNER JOIN role ON department.id = role.department_id WHERE name = ?", answer.name, function(err, res){
         if (err) throw err;
         console.table(res);
+        viewDER();
       }
       );
-      viewDER();
   });
 }
 
@@ -235,16 +235,16 @@ function viewEmploy(){
       {
       name: "first_name",
       type: "input",
-      message: "Which employee are you looking for?"
+      message: "Which employee are you looking for? (Enter first name of employee)"
     }
   ]).then(function(answer){
       connection.query(
       "SELECT first_name, last_name, role_id FROM employee WHERE first_name = ?", answer.first_name, function(err, res){
         if (err) throw err;
         console.table(res);
+        viewDER();
       }
       );
-      viewDER();
   });
 }
 
@@ -262,8 +262,8 @@ function viewRoles(){
       "SELECT * FROM role WHERE title = ?", answer.title, function(err, res){
         if (err) throw err;
         console.table(res);
+        viewDER();
       }
-      );
-      viewDER();
+      ); 
   });
 }
