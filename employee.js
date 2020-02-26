@@ -1,7 +1,8 @@
-var mysql = require("mysql");
-var inquirer = require("inquirer");
+const mysql = require("mysql");
+const inquirer = require("inquirer");
 
-var connection = mysql.createConnection({
+
+const connection = mysql.createConnection({
   host: "localhost",
   port: 3306,
   user: "root",
@@ -11,54 +12,65 @@ var connection = mysql.createConnection({
 
 connection.connect(function(err) {
   if (err) throw err;
-  console.log("connected as id " + connection.threadId);
+  const results = connection.query("SELECT * FROM employee");
+  console.table(results);
   viewUpdateCharts();
 });
 
 function viewUpdateCharts() {
   inquirer.prompt({
-    message: "What option would you like to perform?",
-    name: "choice",
+    name: "options",
     type: "list",
+    message: "What option would you like to perform?",
     choices: [
       "Add departments, roles, employees",
       "View departments, roles, employees",
-      "Update employee roles"
+      "Update employee roles",
+      "END/EXIT"
     ]
 }).then(function(answer) {
-  console.log(answer);
-  switch (answer) {
-    case value:
-      
+  switch (answer.options) {
+    case `Add departments, roles, employees`:
+      addDRE();
       break;
-  
-    default:
-      break;
-  }
 
+    case `View departments, roles, employees`:
+      viewDRE();
+      break;
+
+    case `Update employee roles`:
+      updateER();
+      break;
+
+    case `END/EXIT`:
+      connection.end();
+  }
 });
+}
 
+function addDRE() {
+  inquirer
+    .prompt({
+      name: "department",
+      type: "input",
+      message: "What department would you like to add?"
+    })
+}
 
+function viewDRE() {
+  inquirer
+    .prompt({
+      name: "name",
+      type: "input",
+      message: "What department are you searching for?"
+    }).then(function(answer){
+      connection.query(
+      "SELECT department_id, name, title, salary FROM department INNER JOIN role ON department.id = role.department_id WHERE name = ?", answer.name, function(err, res){
+        if (err) throw err;
+        console.table(res);
+      }
+      );
+      viewUpdateCharts();
+    });
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // connection.query("SELECT department_id, name, title, salary FROM department INNER JOIN role ON department.id = role.department_id", function(err, res) {
-    //   if (err) throw err;
-    //   console.table(res);
-    //   connection.end();
-    // });
-  }
-
-  
