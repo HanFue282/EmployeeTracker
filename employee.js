@@ -13,21 +13,10 @@ const connection = mysql.createConnection({
 connection.connect(function(err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId);
-  // viewMenuTable();
   viewUpdateCharts();
 });
 
-//Main table shown when code is running
-// function viewMenuTable() {
-//   connection.query(
-//       "SELECT * FROM employee", function(err, res){
-//       if (err) throw err;
-//       console.table(res);
-//     }
-//   );
-// }
-
-//Main options to view, add, or update (Haven't worked on update yet)
+//Main options to view, add, or update
 function viewUpdateCharts() {
   inquirer.prompt({
     name: "options",
@@ -49,7 +38,7 @@ function viewUpdateCharts() {
       viewDER();
       break;
 
-    case `Update employee roles`:
+    case `Update employee roles(UNDER CONSTRUCTION)`:
       updateER();
       break;
 
@@ -59,7 +48,7 @@ function viewUpdateCharts() {
 });
 }
 
-//Perform action to add department, employee, or role (START LINE: 62 END LINE: 177)
+//Perform action to add department, employee, or role (START LINE: 51 END LINE: 166)
 function addDER() {
   inquirer.prompt({
     name: "add",
@@ -104,7 +93,7 @@ function addDep() {
       connection.query(
       "INSERT INTO department (name) VALUES (?)", answer.name, function(err, res){
         if (err) throw err;
-        console.table(res);
+        console.log("Sucessfully added department! (Check in 'View departments')");
         addDER();
       }
       );
@@ -139,7 +128,7 @@ function addEmploy() {
   ]).then(function(answer){
     connection.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [answer.first_name, answer.last_name, answer.role_id, answer.manager_id], function(err, res){
         if (err) throw err;
-        console.log("Successfully added employee(Check in 'View employees')");
+        console.log("Successfully added employee! (Check in 'View employees')");
         addDER();
       }
       );
@@ -169,14 +158,14 @@ function addRol() {
     var query = "INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)";
     connection.query(query, [answer.title, answer.salary, answer.department_id], function(err, res){
         if (err) throw err;
-        console.table(res);
+        console.log("Successfully added role! (Check in 'View roles')");
         addDER();
       }
       );
   });
 }
 
-//Perform action to view department, employee, or roles
+//Perform action to view department, employee, or roles (START LINE: 168 END LINE: 258)
 function viewDER() {
   inquirer.prompt({
     name: "view",
@@ -267,3 +256,4 @@ function viewRoles(){
       ); 
   });
 }
+
