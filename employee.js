@@ -1,7 +1,7 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 
-
+//MySQL Connection
 const connection = mysql.createConnection({
   host: "localhost",
   port: 3306,
@@ -12,11 +12,22 @@ const connection = mysql.createConnection({
 
 connection.connect(function(err) {
   if (err) throw err;
-  const results = connection.query("SELECT * FROM employee");
-  console.table(results);
+  console.log("connected as id " + connection.threadId);
+  viewMenuTable();
   viewUpdateCharts();
 });
 
+//Main table shown when code is running
+function viewMenuTable() {
+  connection.query(
+      "SELECT * FROM employee", function(err, res){
+      if (err) throw err;
+      console.table(res);
+    }
+  );
+}
+
+//Main options to view, add, or update (Haven't worked on update yet)
 function viewUpdateCharts() {
   inquirer.prompt({
     name: "options",
@@ -31,11 +42,11 @@ function viewUpdateCharts() {
 }).then(function(answer) {
   switch (answer.options) {
     case `Add departments, roles, employees`:
-      addDRE();
+      addDER();
       break;
 
     case `View departments, roles, employees`:
-      viewDRE();
+      viewDER();
       break;
 
     case `Update employee roles`:
@@ -48,29 +59,211 @@ function viewUpdateCharts() {
 });
 }
 
-function addDRE() {
-  inquirer
-    .prompt({
-      name: "department",
-      type: "input",
-      message: "What department would you like to add?"
-    })
+//Perform action to add department, employee, or role (START LINE: 62 END LINE: 177)
+function addDER() {
+  inquirer.prompt({
+    name: "add",
+    type: "list",
+    message: "What option would you like to perform?",
+    choices: [
+      "Add departments",
+      "Add employees",
+      "Add roles",
+      "GO BACK"
+    ]
+}).then(function(answer) {
+  switch (answer.add) {
+    case `Add departments`:
+      addDep();
+      break;
+
+    case `Add employees`:
+      addEmploy();
+      break;
+
+    case `Add roles`:
+      addRol();
+      break;
+
+    case `GO BACK`:
+      viewUpdateCharts();
+  }
+});
 }
 
-function viewDRE() {
+//Add department function
+function addDep() {
   inquirer
-    .prompt({
+    .prompt([
+      {
       name: "name",
       type: "input",
-      message: "What department are you searching for?"
-    }).then(function(answer){
+      message: "What department(s) do you wish to add?"
+    }
+  ]).then(function(answer){
       connection.query(
-      "SELECT department_id, name, title, salary FROM department INNER JOIN role ON department.id = role.department_id WHERE name = ?", answer.name, function(err, res){
+      "INSERT INTO department (name) VALUES ('?')", answer.name, function(err, res){
         if (err) throw err;
         console.table(res);
       }
       );
-      viewUpdateCharts();
-    });
+      addDER();
+  });
 }
 
+//Add employee function
+function addEmploy() {
+  inquirer
+    .prompt([
+    {
+      name: "first_name",
+      type: "input",
+      message: "Enter first name of the employee"
+    },
+    {
+      name: "last_name",
+      type: "input",
+      message: "Enter last name of employee"
+    },
+    {
+      name: "role_id",
+      type: "number",
+      message: "Enter ID number of their role"
+    },
+    {
+      name: "manager_id",
+      type: "number",
+      message: "Enter ID number for manager (IF NO MANAGER ID, PLEASE ENTER 0)"
+    }
+  ]).then(function(answer){
+    var query = "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('?', '?', ?, ?)";
+    connection.query(query, [answer.first_name, answer.last_name, answer.role_id, answer.manager_id], function(err, res){
+        if (err) throw err;
+        console.table(res);
+      }
+      );
+      addDER();
+  });
+}
+
+//Add role function
+function addRol() {
+  inquirer
+    .prompt([
+    {
+      name: "title",
+      type: "input",
+      message: "What role would you like to enter?"
+    },
+    {
+      name: "salary",
+      type: "number",
+      message: "Enter amount of desire salary for your role"
+    },
+    {
+      name: "department_id",
+      type: "number",
+      message: "Enter ID number of their department"
+    }
+  ]).then(function(answer){
+    var query = "INSERT INTO role (title, salary, department_id) VALUES ('?', '?', ?, )";
+    connection.query(query, [answer.title, answer.salary, answer.department_id], function(err, res){
+        if (err) throw err;
+        console.table(res);
+      }
+      );
+      addDER();
+  });
+}
+
+//Perform action to view department, employee, or roles
+function viewDER() {
+  inquirer.prompt({
+    name: "view",
+    type: "list",
+    message: "Which would you like to view?",
+    choices: [
+      "View departments",
+      "View employees",
+      "View roles",
+      "GO BACK"
+    ]
+}).then(function(answer) {
+  switch (answer.view) {
+    case `View departments`:
+      viewDepart();
+      break;
+
+    case `View employees`:
+      viewEmploy();
+      break;
+
+    case `View roles`:
+      viewRoles();
+      break;
+
+    case `GO BACK`:
+      viewUpdateCharts();
+  }
+});
+}
+
+//View department function
+function viewDepart(){
+inquirer
+    .prompt([
+      {
+      name: "name",
+      type: "input",
+      message: "What department are you searching for?"
+    }
+  ]).then(function(answer){
+      connection.query(
+      "SELECT distinct department_id, name FROM department INNER JOIN role ON department.id = role.department_id WHERE name = ?", answer.name, function(err, res){
+        if (err) throw err;
+        console.table(res);
+      }
+      );
+      viewDER();
+  });
+}
+
+//View employee function
+function viewEmploy(){
+  inquirer
+    .prompt([
+      {
+      name: "first_name",
+      type: "input",
+      message: "Which employee are you looking for?"
+    }
+  ]).then(function(answer){
+      connection.query(
+      "SELECT first_name, last_name, role_id FROM employee WHERE first_name = ?", answer.first_name, function(err, res){
+        if (err) throw err;
+        console.table(res);
+      }
+      );
+      viewDER();
+  });
+}
+
+//View role function
+function viewRoles(){
+  inquirer
+    .prompt([
+      {
+      name: "title",
+      type: "input",
+      message: "Which role would you like to lookup?"
+    }
+  ]).then(function(answer){
+      connection.query(
+      "SELECT * FROM role WHERE title = ?", answer.title, function(err, res){
+        if (err) throw err;
+        console.table(res);
+      }
+      );
+      viewDER();
+  });
+}
